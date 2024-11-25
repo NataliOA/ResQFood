@@ -1,39 +1,39 @@
 import mongoose, { Schema, model } from 'mongoose';
-
 // Define un esquema para mantener el contador
-const CounterSchema = new Schema({
+const CounterSchema = new mongoose.Schema({
     _id: { type: String, required: true },
     seq: { type: Number, default: 0 }
 });
-
 const Counter = mongoose.model('Counter', CounterSchema);
-
-const MenuItemSchema = new Schema({
-    _id: { type: Schema.Types.ObjectId, auto: true }, // Genera automáticamente un _id para cada item
+const MenuItemSchema = new mongoose.Schema({
+    item_id: { type: Number, unique: true }, // Campo autoincremental para item_id
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    status: { type: String, default: "disponible" },
-    quantity: { type: Number, required: true },
+    status: { type: String, required: true, default: "disponible" },
+    quantity: { type: Number, required: true }
 });
 
-const BusinessSchema = new Schema({
-    business_id: { type: Number, unique: true, required: true },
-    name: { type: String, required: true },
-    menu: [MenuItemSchema], // Utiliza el subdocumento para el menú
-});
-
-// Middleware para incrementar el business_id antes de guardar un nuevo negocio
-BusinessSchema.pre('save', async function (next) {
-    if (this.isNew) {
-        // Obtiene y actualiza el contador en la colección Counter
+// Middleware para incrementar item_id antes de guardar un nuevo elemento en el menú
+MenuItemSchema.pre('save', async function (next) {
+    if (this.isNew) { // Solo incrementar para nuevos documentos
         const counter = await Counter.findByIdAndUpdate(
-            { _id: 'businessId' },
+            { _id: 'itemId' },
             { $inc: { seq: 1 } },
             { new: true, upsert: true }
         );
-        this.business_id = counter.seq;
+        this.item_id = counter.seq;
     }
     next();
 });
+const BusinessSchema = new mongoose.Schema({
+    business_id: { type: Number, unique: true, required: true },
+    name: { type: String, required: true },
+    menu: [MenuItemSchema]
+});
 
+BusinessSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        next();
+    }
+});
 export default model('Business', BusinessSchema);

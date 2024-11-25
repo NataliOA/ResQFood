@@ -15,13 +15,13 @@ export default async (req, res) => {
             currentOrder: [],
             selectedRestaurant: null,
             selectedItem: null,
-            flow: null, // flujo actual (cliente o restaurante)
+            flow: null,
         };
     }
 
     const user = userState[from];
 
-    // Si el flujo no ha sido seleccionado aún
+
     if (!user.flow) {
         if (messageBody === "1") {
             user.flow = 'client';
@@ -31,7 +31,7 @@ export default async (req, res) => {
             user.flow = 'restaurant';
             await WhatsappRestaurantService.handleMessage(messageBody, user, twiml);
         } else {
-            twiml.message("¡Hola! Soy tu asistente de pedidos. Responde con el número de una opción:\n1. Soy Cliente\n2. Soy Restaurante");
+            twiml.message("¡Hola! Soy ResQFood, tu asistente de pedidos. Responde con el número de una opción:\n1. Soy Cliente\n2. Soy Restaurante");
         }
     } else if (user.flow === 'client') {
         await WhatsappClientService.handleMessage(messageBody, user, twiml);
@@ -40,7 +40,6 @@ export default async (req, res) => {
     }
 
     const responseMessage = twiml.toString();
-    console.log(responseMessage);
 
     res.status(200).send(responseMessage);
 };

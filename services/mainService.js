@@ -1,18 +1,21 @@
-// services/WhatsappService.js
-
 import WhatsappClientService from './WhatsappClientService.js';
 import WhatsappRestaurantService from './WhatsappRestaurantService.js';
 
-let currentFlow = null; // Tracks whether the user is a client or restaurant
+let currentFlow = null;
 
-// Main function to handle messages and decide on the flow
+const resetClientFlow = () => {
+    currentOrder = [];
+    currentStep = null;
+    selectedRestaurant = null;
+    selectedItem = null;
+};
+
 const handleMessage = async (messageBody, from, twiml) => {
     messageBody = normalizeText(messageBody.trim());
 
-    // Reset flow if the user types "hola"
-    if (messageBody === "hola") {
-        currentFlow = null;
-        return welcomeMessage(twiml);
+    if (messageBody.toLowerCase() === "hola") {
+        resetClientFlow();
+        return welcomeMessage(twiml); 
     }
 
     // Determine initial flow based on user choice (client or restaurant)
@@ -44,8 +47,8 @@ const normalizeText = (text) => {
 
 // Initial welcome message
 const welcomeMessage = (twiml) => {
-    twiml.message("¡Hola! Soy tu asistente de pedidos. Responde con el número de una opción:\n1. Soy Cliente\n2. Soy Restaurante");
+    twiml.message("¡Hola! Soy ResQFood, tu asistente de pedidos. Responde con el número de una opción:\n1. Soy Cliente\n2. Soy Restaurante");
     return twiml;
 };
 
-export default { handleMessage };
+export default { handleMessage, welcomeMessage, normalizeText};
