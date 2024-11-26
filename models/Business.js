@@ -28,7 +28,8 @@ MenuItemSchema.pre('save', async function (next) {
 const BusinessSchema = new mongoose.Schema({
     business_id: { type: Number, unique: true, required: true },
     name: { type: String, required: true },
-    menu: [MenuItemSchema]
+    menu: [MenuItemSchema],
+    address: {type: String, required:true}
 });
 
 BusinessSchema.pre('save', async function (next) {
