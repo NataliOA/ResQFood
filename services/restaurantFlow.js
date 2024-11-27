@@ -48,7 +48,7 @@ const saveRestaurant = async (restName, restAddress, twiml) => {
 }
 
 const restaurantOptions = (twiml) => {
-    twiml.message("¿Qué deseas hacer? Responde con el número:\n1. Actualizar Menú\n2. Ver Pedidos");
+    twiml.message("¿Qué deseas hacer? Responde con el número:\n1. Actualizar Menú\n2. Ver Pedidos\n3. Salir");
     return twiml;
 };
 
@@ -104,13 +104,112 @@ const getMenuFrom = async (twiml,restID) => {
         menuText += `${index + 1}. ${art.name}: ${art.price}\nCantidad: ${art.quantity}\nEstado: ${art.status}\n`;
     });
 
-    menuText += "¿Qué deseas hacer? Responde con:\n1. Nuevo alimento\n2. Eliminar alimento\n3.Modificar alimento\n";
+    menuText += "¿Qué deseas hacer? Responde con:\n1. Nuevo alimento\n2. Eliminar alimento\n3.Modificar alimento\n4.Salir";
     twiml.message(menuText);
     return twiml;
 };
 
-const collectInfo = async (twiml) => {
-    
+const collectInfo = async (twiml,data) => {
+    switch(data){
+        case 0:
+            twiml.message("Escribe el nombre del artículo (Considera que tal como lo escribas se guardará):");
+            return twiml;
+        case 1:
+            twiml.message("Escribe el precio del artículo (Sin decimales):");
+            return twiml;
+        case 2:
+            twiml.message("Escribe la cantidad disponible del artículo (Sin decimales):");
+            return twiml;
+        default:
+            twiml.message("Ups, no tengo información para esta acción");
+            return twiml;
+    }
 }
 
-export default { restaurantOptions };
+const validateFood = async (twiml,info) => {
+    twiml.message("El producto a añadir es el siguiente:\n  Nombre: ",info.name,"\n  Precio: $",info.price,"\n  Cantidad: ",info.quantity,"\n¿Los datos son correctos?\nResponde 1.Sí 2.No");
+    return twiml;
+}
+
+const addFood = async (twiml, newFood, restId) => {
+    try{
+        const result = await saveFood(newFood,restId);
+        if (result.success){
+            twiml.message("El artículo se guardó exitosamente.");
+            return success.message;
+        }
+    }catch{
+        twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.")
+        return null;
+    }
+}
+
+const modifyOptions = async (twiml) => {
+    twiml.message("¿Qué dato deseas cambiar?\nResponde con: 1.Nombre 2.Precio 3.Cantidad")
+    return twiml;
+}
+
+const modify = async (twiml,feat) => {
+    switch(feat){
+        case 0:
+            twiml.message("Escribe el nombre del artículo (Considera que tal como lo escribas se guardará):");
+            return twiml;
+        case 1:
+            twiml.message("Escribe el precio del artículo (Sin decimales):");
+            return twiml;
+        case 2:
+            twiml.message("Escribe la cantidad disponible del artículo (Sin decimales):");
+            return twiml;
+        default:
+            return twiml;
+    }
+}
+
+const getFood = async (twiml) => {
+    twiml.message("Escribe el número del artículo a afectar.");
+    return twiml;
+}
+
+const getFoodById = async (twiml,itemId,restId) => {
+    success = false;
+
+    const result = await getMenuItem(itemId,restId);
+
+    if(result){
+        twiml.message("Artículo\nNombre: ",result.name,"\nPrecio: ",result.price,"\nCantidad:",result.quantity);
+        return result;
+    }else {
+        twiml.message("No encontramos sus daots. Verifique su código de identificación.");
+        return null;
+    }
+}
+
+const updateFood = async (twiml,item,restId) => {
+    try{
+        const result = await updateMenuItem(item,restId);
+        if (result.success){
+            twiml.message("El artículo se actualizó correctamente.");
+            return success.message;
+        }
+    }catch{
+        twiml.message("Hubo un error al intentar actualizar el artículo.\nPor favor, intente de nuevo.")
+        return null;
+    }
+}
+
+const removeFood = async (twiml,item,restId) => {
+    try{
+        const result = await removeMenuItem(item,restId);
+        if (result.success){
+            twiml.message("El artículo se eliminó correctamente.");
+            return success.message;
+        }
+    }catch{
+        twiml.message("Hubo un error al intentar actualizar el artículo.\nPor favor, intente de nuevo.")
+        return null;
+    }
+}
+
+export default { restaurantOptions,startRestaurant,setRestaurant,getRestaurantInfo,getRestaurant,setaddress,saveRestaurant,
+    getOrdersFrom,getOrder,getMenuFrom,updateOrder,removeFood,updateFood,collectInfo,validateFood,addFood,modify,modifyOptions,
+    getFood,getFoodById };

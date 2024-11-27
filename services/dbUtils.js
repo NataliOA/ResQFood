@@ -62,7 +62,6 @@ export const getRestaurantInfo = async (restaurantId) => {
 
 export async function saveRestaurant(restName,restAddress) {
     const business = new {
-        business_id: getRestaurantsFromDB(),
         name: restName,
         menu: [],
         address: restAddress
@@ -75,6 +74,47 @@ export async function saveRestaurant(restName,restAddress) {
     }
 
     return {success:true, message: newBusiness.business_id};
+}
+
+export async function saveFood(food,rest) {
+    const nuevoItem = food;
+
+    const resultado = await Business.updateOne(
+        { business_id: rest }, 
+        { $push: { menu: nuevoItem } }
+    );
+
+    if(!resultado){
+        throw new Error("El negocio no se creó correctamente.");
+    }
+
+    return {success:true, message: resultado.menu};
+}
+
+export const updateMenuItem = async (item,restId) => {
+    const newItem = await Business.updateOne(
+        { business_id: restId, 'menu.item_id': item.item_id },
+        { $set: { 'menu.$': item } } 
+    );
+
+    if(!newItem){
+        throw new Error("No se pudo actualizar la orden.");
+    }
+
+    return {success:true, message: newItem};
+}
+
+export const removeMenuItem = async (item,restId) => {
+    const resultado = await Business.updateOne(
+        { business_id: restId }, 
+        { $pull: { menu: { item_id: item.item_id } } } 
+    )
+
+    if(!resultado){
+        throw new Error("No se pudo actualizar la orden.");
+    }
+
+    return {success:true, message: resultado};
 }
 
 export async function reserveItem(businessId, itemId, quantity) {
