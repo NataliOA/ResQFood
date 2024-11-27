@@ -34,4 +34,4 @@ OrderSchema.pre('save', async function (next) {
     }
 });
 
-export default model('Order', OrderSchema);
+export default model('Order', OrderSchema, 'order');

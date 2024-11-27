@@ -1,5 +1,5 @@
 import Business from '../models/Business.js';
-import Order from '.../models/Order.js';
+import Order from '../models/Order.js';
 
 export const getRestaurantsFromDB = async () => {
     return await Business.find({});
@@ -8,7 +8,6 @@ export const getRestaurantsFromDB = async () => {
 export const getOrdersFromDB = async () => {
     return await Order.find({});
 };
-
 // Función para obtener el menú de un negocio específico y filtrar los alimentos disponibles
 export const getAvailableMenu = async (restaurantId) => {
     const restaurant = await Business.findOne({ business_id: restaurantId }).select('menu');
@@ -61,19 +60,22 @@ export const getRestaurantInfo = async (restaurantId) => {
 }
 
 export async function saveRestaurant(restName,restAddress) {
-    const business = new {
+
+    const newbusiness = new Business({
         name: restName,
         menu: [],
         address: restAddress
-    }
+    })
 
-    const newBusiness = await business.save();
+    const result = await newbusiness.save();
 
-    if(!newBusiness){
+    console.log("resultado: ",result)
+
+    if(!result){
         throw new Error("El negocio no se creó correctamente.");
     }
 
-    return {success:true, message: newBusiness.business_id};
+    return {success:true, message: result.business_id};
 }
 
 export async function saveFood(food,rest) {
@@ -90,6 +92,19 @@ export async function saveFood(food,rest) {
 
     return {success:true, message: resultado.menu};
 }
+
+export const getMenuItem = async (itemid,restId) => {
+    const newItem = await Business.updateOne(
+        { business_id: restId, 'menu.item_id': itemid }
+    );
+
+    if(!newItem){
+        throw new Error("No se pudo encontró el artículo.");
+    }
+
+    return {success:true, message: newItem};
+}
+
 
 export const updateMenuItem = async (item,restId) => {
     const newItem = await Business.updateOne(

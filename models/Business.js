@@ -25,16 +25,30 @@ MenuItemSchema.pre('save', async function (next) {
     }
     next();
 });
+
 const BusinessSchema = new mongoose.Schema({
-    business_id: { type: Number, unique: true, required: true },
+    business_id: { type: Number, unique: true, required: false },
     name: { type: String, required: true },
     menu: [MenuItemSchema],
     address: {type: String, required:true}
 });
 
 BusinessSchema.pre('save', async function (next) {
+    console.log("middleware")
     if (this.isNew) {
-        next();
+        const counter = await Counter.findByIdAndUpdate(
+            { _id: 'businessId' },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
+        );
+        if (counter) {
+            this.business_id = counter.seq;
+        } else {
+            throw new Error('No se pudo generar el business_id');
+        }
+        console.log("middleware ", counter)
     }
+    next();
 });
-export default model('Business', BusinessSchema);
+
+export default model('Business', BusinessSchema, 'business');

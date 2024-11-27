@@ -21,11 +21,11 @@ const handleMessage = async (messageBody, from, twiml) => {
             currentStep = "startRestaurant";
             return restaurantFlow.startRestaurant(twiml);
         case "startRestaurant":
-            return handleStartRestaurant(twiml);
+            return handleStartRestaurant(twiml,messageBody);
         case "setRestaurant":
-            return handleNewRestaurant(twiml);
+            return handleNewRestaurant(twiml,messageBody);
         case "setAddress":
-            return handleNewRestaurant(twiml);
+            return handleNewRestaurant(twiml,messageBody);
         case "getRestaurant":
             return handleGetRestaurant(twiml,messageBody);
         case "restaurantOptions":
@@ -68,7 +68,7 @@ const resetRestaurantFlow = () => {
 //     return twiml;
 // };
 
-const handleStartRestaurant = async (messageBody,twiml) => {
+const handleStartRestaurant = async (twiml,messageBody) => {
     if(messageBody == "1"){
         currentStep = "getRestaurant";
         return restaurantFlow.getRestaurant(twiml);
@@ -78,34 +78,29 @@ const handleStartRestaurant = async (messageBody,twiml) => {
     }
 }
 
-const handleNewRestaurant = async (messageBody,twiml) => {
+const handleNewRestaurant = async (twiml,messageBody) => {
     if(currentStep == "setRestaurant"){
         currentStep = "setAddress";
-        RestaurantName = messageBody.trim();
+        RestaurantName = messageBody;
         return restaurantFlow.setaddress(twiml);
     }else if(currentStep == "setAddress"){
-        RestaurantAddress = messageBody.trim();
-        success = restaurantFlow.saveRestaurant(RestaurantName, RestaurantAddress);
+        RestaurantAddress = messageBody;
+        const success = restaurantFlow.saveNewRestaurant(RestaurantName, RestaurantAddress,twiml);
         if(success){
+            currentStep = "getRestaurant";
             RestaurantID = parseInt(success);
-            currentStep = "restaurantOptions";
-            return restaurantFlow.restaurantOptions(twiml);
-        }else{
-            currentStep = "setRestaurant";
-            RestaurantName = "";
-            RestaurantAddress = "";
-            return restaurantFlow.setRestaurant(twiml);
+            return restaurantFlow.getRestaurant(twiml,success);
         }
     }
 };
 
 const handleGetRestaurant = async (twiml, messageBody) => {
     restID = parseInt(messageBody.trim())
-    restaurant = restaurantFlow.getRestaurantInfo(restID)
-    if(restaurant){
-        RestaurantName = restaurant.name;
-        RestaurantAddress = restaurant.address;
-        RestaurantID = restaurant.business_id;
+    const result = restaurantFlow.getRestaurantInformation(restID)
+    if(result){
+        RestaurantName = result.restaurant.name;
+        RestaurantAddress = result.restaurant.address;
+        RestaurantID = result.restaurant.business_id;
         currentStep = "restaurantOptions";
         return restaurantFlow.restaurantOptions(twiml);
     }else {
@@ -155,10 +150,10 @@ const handleUpdateMenu = async (twiml,messageBody) => {
         return restaurantFlow.collectInfo(twiml,0);
     }else if (messageBody === "2"){
         currentStep = "removeFood";
-        return restaurantFlow.getFood(twiml);
+        return restaurantFlow.getFoodConsole(twiml);
     }else if (messageBody === "3"){
         currentStep = "modifyFood";
-        return restaurantFlow.getFood(twiml)
+        return restaurantFlow.getFoodConsole(twiml)
     }else{
         currentStep = "restaurantOptions";
         return restaurantFlow.restaurantOptions(twiml);
@@ -227,7 +222,7 @@ const handleValidationRemoveOptions = async (twiml,messageBody) => {
         }
     }else if(messageBody === '2'){
         currentStep = "removeFood";
-        return restaurantFlow.getFood(twiml);
+        return restaurantFlow.getFoodConsole(twiml);
     }
 }
 
@@ -294,11 +289,11 @@ const handleModifiyFeatUpdate = async (twiml,messageBody) => {
 }
 
 const handleModifyFood = async (twiml,messageBody) => {
-    newFood = restaurantFlow.getFoodById(twiml,messageBody);
+    newFood = restaurantFlow.getFoodById(twiml,messageBody,RestaurantID);
     if(!newFood){
         twiml.message("No se encontró el artículo.");
         currentStep = "modifyFood";
-        return restaurantFlow.getFood(twiml);
+        return restaurantFlow.getFoodConsole(twiml);
     }else{
         currentStep = "chooseFeatUpdate"
         return resetRestaurantFlow.modifyOptions(twiml);
@@ -306,11 +301,11 @@ const handleModifyFood = async (twiml,messageBody) => {
 }
 
 const handleRemoveFood = async (twiml,messageBody) => {
-    newFood = restaurantFlow.getFoodById(twiml,messageBody);
+    newFood = restaurantFlow.getFoodById(twiml,messageBody,RestaurantID);
     if(!newFood){
         twiml.message("No se encontró el artículo.");
         currentStep = "removeFood";
-        return restaurantFlow.getFood(twiml);
+        return restaurantFlow.getFoodConsole(twiml);
     }else {
         currentStep = "validateRemove"
         return restaurantFlow.validateFood(twiml,newFood);
