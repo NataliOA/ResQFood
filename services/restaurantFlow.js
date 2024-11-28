@@ -1,5 +1,5 @@
 import { getRestaurantInfo,saveRestaurant,getOrdersByRestaurant,updateDeliveredOrder,getMenuByRestaurant,removeMenuItem,updateMenuItem, 
-    getMenuItem,saveFood,getName
+    getMenuItem,saveFood,getItemName
 } from "./dbUtils.js";
 
 let id = "0";
@@ -23,44 +23,44 @@ const setaddress = (twiml) => {
     return twiml;
 }
 
-const getRestaurantInformation = async (restId, twiml) => {
+// const getRestaurantInformation = async (restId, twiml) => {
 
-    const result = await getRestaurantInfo(restId);
+//     const result = await getRestaurantInfo(restId);
 
-    if(result){
-        //twiml.message(`Bienvenido, sus datos son:\nNombre: ${result.restaurant.name}\nDirección: ",result.restaurant.address`);
-        return twiml;
-    }else {
-        twiml.message("No encontramos sus datos. Verifique su código de identificación.");
-        return twiml;
-    }
-}
+//     if(result){
+//         //twiml.message(`Bienvenido, sus datos son:\nNombre: ${result.restaurant.name}\nDirección: ",result.restaurant.address`);
+//         return twiml;
+//     }else {
+//         twiml.message("No encontramos sus datos. Verifique su código de identificación.");
+//         return twiml;
+//     }
+// }
 
-const saveNewRestaurant = async (restName, restAddress, twiml) => {
-    try{
-        const result = await saveRestaurant(restName,restAddress);
-        console.log(result);
-        if (result.success){
-            //twiml.message("Su id de restaurante es "+result.message.toString());
-            id = result.message;
-            console.log(id);
-            return twiml;
-        }else{
-            twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.");
-            return twiml;
-        }
-    }catch(Error){
-        console.log(Error.message);
-        twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.");
-        return twiml;
-    }
-}
+// const saveNewRestaurant = async (restName, restAddress, twiml) => {
+//     try{
+//         const result = await saveRestaurant(restName,restAddress);
+//         console.log(result);
+//         if (result.success){
+//             //twiml.message("Su id de restaurante es "+result.message.toString());
+//             id = result.message;
+//             console.log(id);
+//             return twiml;
+//         }else{
+//             twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.");
+//             return twiml;
+//         }
+//     }catch(Error){
+//         console.log(Error.message);
+//         twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.");
+//         return twiml;
+//     }
+// }
 
-const getRestId = () =>{ 
-    const rId = id.toString();
-    console.log("A  ",rId);
-    return rId;
-}
+// const getRestId = () =>{ 
+//     const rId = id.toString();
+//     console.log("A  ",rId);
+//     return rId;
+// }
 
 const restaurantOptions = (twiml) => {
     twiml.message("¿Qué deseas hacer? Responde con el número:\n1. Actualizar Menú\n2. Ver Pedidos\n3. Salir");
@@ -72,27 +72,25 @@ const getOrdersFrom = async (twiml,restId) => {
     const orders = await getOrdersByRestaurant(restId);
     console.log(orders);
     let orderText = "Órdenes pendientes:\n";
+    let index = 0;
 
-    orders.forEach((order,index) =>{
-        orderText += `${index+1}. Orden #${order.order_id} - ${order.client_id}\n$${order.total}\n`;
+    for(const order of orders){
         if(Array.isArray(order.detalles)){
-            const orderDetails = orders.detalles;
-            if(orderDetails){
-                orderDetails.forEach((det,Detindex) =>{
-                    orderText += `  ${Detindex+1}- ${det.item_id}: ${det.cantidad} $${det.subtotal}\n`
-                })
-            }else{
-                orderText += "Sin alimentos.\n"
+            orderText += `${index+1}. Orden #${order.order_id} - ${order.client_id}\n$${order.total}\n`;
+            for(const det of orders[index].detalles){
+                const art = await getItemName(det.item_id,restId);
+                orderText += ` - ${det.cantidad} ${art} $${det.subtotal}\n`;
+                //console.log(orderText);
             }
+            index ++;
         }else{
-            orderText += "Sin alimentos.\n"
+            orderText += ""
         }
+    }
 
-        orderText += "¿Qué deseas hacer? Responde con:\n1. Atrás.";
-        twiml.message(orderText);
-        return twiml;
-         
-    })
+    orderText += "\n¿Qué deseas hacer? Responde con:\n1. Atrás.";
+    twiml.message(orderText);
+    return twiml;
 }
 
 const getOrder = async (twiml) => {
@@ -114,7 +112,9 @@ const updateOrder = async (twiml,orderId) => {
 }
 
 const getMenuFrom = async (twiml,restID) => {
+    console.log("getMenuFrom");
     const Menu = await getMenuByRestaurant(restID);
+    console.log("menu",Menu);
     let menuText = "Menú:\n";
 
     Menu.forEach((art, index) => {
@@ -156,11 +156,11 @@ const addFood = async (twiml, newFood, restId) => {
         console.log(result);
         if (result.success){
             twiml.message("El artículo se guardó exitosamente.");
-            return success.message;
+            return twiml;
         }
     }catch{
         twiml.message("Hubo un error al intentar guardar sus datos.\nPor favor, intente de nuevo.")
-        return null;
+        return twiml;
     }
 }
 
@@ -200,18 +200,18 @@ const getFoodConsole = async (twiml) => {
     return twiml;
 }
 
-const getFoodById = async (twiml,itemid,restId) => {
+// const getFoodById = async (twiml,itemid,restId) => {
 
-    const result = await getMenuItem(itemid,restId);
+//     const result = await getMenuItem(itemid,restId);
 
-    if(result){
+//     if(result){
         
-        return twiml;
-    }else {
-        twiml.message("No encontramos sus datos. Verifique su código de identificación.");
-        return twiml;
-    }
-}
+//         return twiml;
+//     }else {
+//         twiml.message("No encontramos sus datos. Verifique su código de identificación.");
+//         return twiml;
+//     }
+// }
 
 const updateFood = async (twiml,item,restId) => {
     try{
@@ -239,6 +239,6 @@ const removeFood = async (twiml,item,restId) => {
     }
 }
 
-export default { restaurantOptions,startRestaurant,setRestaurant,getRestaurantInformation,getRestaurant,setaddress,saveNewRestaurant,
+export default { restaurantOptions,startRestaurant,setRestaurant,getRestaurant,setaddress,
     getOrdersFrom,getOrder,getMenuFrom,updateOrder,removeFood,updateFood,collectInfo,validateFood,addFood,modify,modifyOptions,
-    getFoodConsole,getFoodById,getRestId };
+    getFoodConsole };

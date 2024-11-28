@@ -6,7 +6,7 @@ const CounterSchema = new mongoose.Schema({
 });
 const Counter = mongoose.model('Counter', CounterSchema);
 const MenuItemSchema = new mongoose.Schema({
-    item_id: { type: Number, unique: true }, // Campo autoincremental para item_id
+    item_id: { type: Number, unique: true, required:false }, // Campo autoincremental para item_id
     name: { type: String, required: true },
     price: { type: Number, required: true },
     status: { type: String, required: true, default: "disponible" },
@@ -34,7 +34,7 @@ const BusinessSchema = new mongoose.Schema({
 });
 
 BusinessSchema.pre('save', async function (next) {
-    console.log("middleware")
+    //console.log("middleware")
     if (this.isNew) {
         const counter = await Counter.findByIdAndUpdate(
             { _id: 'businessId' },
@@ -46,7 +46,7 @@ BusinessSchema.pre('save', async function (next) {
         } else {
             throw new Error('No se pudo generar el business_id');
         }
-        console.log("middleware ", counter)
+        //console.log("middleware ", counter)
     }
     next();
 });

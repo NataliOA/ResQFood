@@ -26,6 +26,25 @@ export const getMenuByRestaurant = async (restaurantId) => {
     return restaurant.menu;
 };
 
+export const getDetsByOrder = async (orderId) => {
+    const order = await Order.findOne({ order_id: orderId }).select('detalles');
+    console.log("orden",order);
+    if (!order || !order.detalles) {
+        throw new Error("No se encontró la orden.");
+    }
+    console.log("detalles",order.detalles)
+    return order.detalles;
+};
+
+export const getItemName = async (itemid, restId) => {
+    const menu = await getMenuByRestaurant(restId);
+    console.log("menu",menu);
+    const art = menu.find((item) => item.item_id == itemid);
+    console.log("art",art);
+
+    return art.name;
+}
+
 export const getName = async (id) => {
     const client = await Client.findOne({cliente_id:id});
     return client.name;
@@ -34,6 +53,12 @@ export const getName = async (id) => {
 export const getOrdersByRestaurant = async (restaurantId) => {
     const orders = await Order.find({business_id:restaurantId});
     
+    console.log(orders);
+
+  for(const order of orders){
+    order.detalles = await getDetsByOrder(order.order_id);
+  }
+
     console.log(orders);
 
     return orders;
@@ -70,7 +95,7 @@ export async function saveRestaurant(restName,restAddress) {
         name: restName,
         menu: [],
         address: restAddress
-    })
+    });
 
     const result = await newbusiness.save();
 
@@ -78,16 +103,27 @@ export async function saveRestaurant(restName,restAddress) {
         throw new Error("El negocio no se creó correctamente.");
     }
 
-    return {success:true, message: result.business_id};
+    console.log(result);
+    let id = parseInt(result.business_id);
+    console.log(id);
+
+    return id;
 }
+
+// export function getNewRestaurantId(){
+//     return id
+// }
 
 export const saveFood = async (food,rest) => {
     console.log("addFood");
     const nuevoItem = food;
     console.log(food);
+
+    let menu = await getMenuByRestaurant(rest);
+    let newID = menu.length + 1;
     const resultado = await Business.findOneAndUpdate(
         { business_id: rest }, 
-        { $push: { menu: nuevoItem } },
+        { $push: { menu: {item_id: newID,name: nuevoItem.name,price: nuevoItem.price,status: nuevoItem.status,quantity: nuevoItem.quantity}} },
         { new: true }
     );
 
@@ -101,17 +137,18 @@ export const saveFood = async (food,rest) => {
 }
 
 export const getMenuItem = async (itemid,restId) => {
-    const newItem = await Business.findOne(
-        { business_id: restId, 'menu.item_id': itemid }
-    );
+    const menu = await getMenuByRestaurant(restId);
+
+    const newItem = menu.find(item => item.item_id == itemid);
+
+    console.log("ni",newItem);
 
     if(!newItem){
-        throw new Error("No se pudo encontró el artículo.");
+        throw new Error("No se pudo encontrar el artículo.");
     }
 
     return {success:true, message: newItem};
 }
-
 
 export const updateMenuItem = async (item,restId) => {
     const newItem = await Business.updateOne(

@@ -1,6 +1,7 @@
 // services/WhatsappRestaurantService.js
 import mainService from './mainService.js'
 import restaurantFlow from './restaurantFlow.js';
+import {saveRestaurant,getRestaurantInfo,getMenuItem} from "./dbUtils.js"
 
 let currentStep = null;
 let RestaurantID = null;
@@ -8,7 +9,7 @@ let RestaurantName = null;
 let RestaurantAddress = null;
 let infoCount = 0;
 let feat = 0;
-let newFood = {name: "",price: 0,status: "disponible",quantity: 0}
+let newFood = {item_id:0,name: "",price: 0,status: "disponible",quantity: 0}
 
 const handleMessage = async (messageBody, from, twiml, initialStep) => {
     //currentStep = currentStep;
@@ -105,13 +106,13 @@ const handleNewRestaurant = async (twiml,messageBody) => {
         return restaurantFlow.setaddress(twiml);
     }else if(currentStep == "setAddress"){
         RestaurantAddress = messageBody;
-        const success = restaurantFlow.saveNewRestaurant(RestaurantName, RestaurantAddress,twiml);
+        const success = await saveRestaurant(RestaurantName, RestaurantAddress);
         if(success){
-            console.log("entró");
+            console.log("entró",success);
             currentStep = "restaurantOptions";
-            RestaurantID = restaurantFlow.getRestId();
+            RestaurantID = parseInt(success);
             console.log("success ",RestaurantID);
-            twiml.message("Su id de restaurante es: 7\nGuardelo para poder acceder de nuevo.");
+            twiml.message("Su id de restaurante es: "+RestaurantID+"\nGuardelo para poder acceder de nuevo.");
             return restaurantFlow.restaurantOptions(twiml);
         }else{
             twiml.message("Reintentelo, por favor.")
@@ -123,11 +124,11 @@ const handleNewRestaurant = async (twiml,messageBody) => {
 
 const handleGetRestaurant = async (twiml, messageBody) => {
     const restID = parseInt(messageBody.trim())
-    const result = restaurantFlow.getRestaurantInformation(restID)
+    const result = await getRestaurantInfo(restID)
     if(result){
-        RestaurantName = "Pizzería La Rústica";
-        RestaurantAddress = "Calle 20 #19 Montes de Amé";
-        RestaurantID = 3;
+        RestaurantName = result.name;
+        RestaurantAddress = result.address;
+        RestaurantID = result.business_id;
         currentStep = "restaurantOptions";
         return restaurantFlow.restaurantOptions(twiml);
     }else {
@@ -139,10 +140,11 @@ const handleGetRestaurant = async (twiml, messageBody) => {
 const handleRestaurantOptions = async (twiml,messageBody) => {
     if (messageBody === "1") {
         currentStep = "updateMenu";
+        console.log("rest",RestaurantID);
         return restaurantFlow.getMenuFrom(twiml,RestaurantID);
     } else if (messageBody === "2") {
         currentStep = "listOrders";
-        return restaurantFlow.getOrdersFrom(twiml,2);
+        return restaurantFlow.getOrdersFrom(twiml,RestaurantID);
     } else{
         currentStep = "startRestaurant";
         return restaurantFlow.startRestaurant(twiml);
@@ -161,7 +163,7 @@ const handleOrderOptions = async (twiml,messageBody) => {
 
 const handleUpdateOrder = async (twiml,messageBody) => {
     orderId = parseInt(messageBody.trim());
-    success = restaurantFlow.updateOrder(orderId);
+    success = await restaurantFlow.updateOrder(orderId);
     if(success){
         currentStep = "restaurantOptions";
         return restaurantFlow.restaurantOptions(twiml);
@@ -208,7 +210,7 @@ const handleGetInfo = async (twiml, messageBody) => {
 const handleValidationOptions = async (twiml,messageBody) => {
     if(messageBody === '1'){
         console.log("add");
-        const resultado = restaurantFlow.addFood(twiml,newFood,RestaurantID);
+        const resultado = await restaurantFlow.addFood(twiml,{name:newFood.name,price:newFood.price,quantity:newFood.quantity,status:newFood.status},RestaurantID);
         if(resultado){
             currentStep = "updateMenu";
             return restaurantFlow.getMenuFrom(twiml,RestaurantID);
@@ -224,13 +226,13 @@ const handleValidationOptions = async (twiml,messageBody) => {
 
 const handleValidationUpdateOptions = async (twiml,messageBody) => {
     if(messageBody === '1'){
-        const resultado = restaurantFlow.updateFood(twiml,newFood,RestaurantID);
+        const resultado = await restaurantFlow.updateFood(twiml,newFood,RestaurantID);
         if(resultado){
             currentStep = "updateMenu";
             return restaurantFlow.getMenuFrom(twiml,RestaurantID);
         }else{
             currentStep = "validateUpdate";
-            return restaurantFlow.validateFood(twiml,{name: "Pizza Champiñón",price: 85,status: "disponible",quantity: 2});
+            return restaurantFlow.validateFood(twiml,{name: newFood.name,price: newFood.price,status: newFood.status,quantity: newFood.quantity});
         }
     }else if(messageBody === '2'){
         currentStep = "chooseFeatUpdate";
@@ -240,7 +242,7 @@ const handleValidationUpdateOptions = async (twiml,messageBody) => {
 
 const handleValidationRemoveOptions = async (twiml,messageBody) => {
     if(messageBody === '1'){
-        const resultado = restaurantFlow.removeFood(twiml,{item_id: 4,name: "Pizza Champiñón",price: 80,status: "disponible",quantity: 2},RestaurantID);
+        const resultado = await restaurantFlow.removeFood(twiml,newFood,RestaurantID);
         if(resultado){
             currentStep = "updateMenu";
             return restaurantFlow.getMenuFrom(twiml,RestaurantID);
@@ -336,27 +338,40 @@ const handleModifiyFeatUpdate = async (twiml,messageBody) => {
 }
 
 const handleModifyFood = async (twiml,messageBody) => {
-    newFood = restaurantFlow.getFoodById(twiml,messageBody,RestaurantID);
-    if(!newFood){
+    const result = await getMenuItem(messageBody,RestaurantID);
+    if(!result.success){
         twiml.message("No se encontró el artículo.");
         currentStep = "modifyFood";
         return restaurantFlow.getFoodConsole(twiml);
     }else{
-        twiml.message("Artículo\nNombre: Pizza Champiñón\nPrecio: $75\nCantidad:2");
+        console.log("entró", result.message);
+        newFood.item_id = result.message.item_id;
+        newFood.name = result.message.name;
+        newFood.price = result.message.price;
+        newFood.quantity = result.message.quantity;
+        newFood.status = result.message.status;
+        twiml.message("Artículo\nNombre:"+newFood.name+"\nPrecio:"+newFood.price+"\nCantidad:"+newFood.quantity);
         currentStep = "chooseFeatUpdate"
         return restaurantFlow.modifyOptions(twiml);
     }
 }
 
 const handleRemoveFood = async (twiml,messageBody) => {
-    newFood = restaurantFlow.getFoodById(twiml,messageBody,RestaurantID);
-    if(!newFood){
+    const result = await getMenuItem(messageBody,RestaurantID);
+    console.log(result);
+    if(!result.success){
         twiml.message("No se encontró el artículo.");
         currentStep = "removeFood";
         return restaurantFlow.getFoodConsole(twiml);
     }else {
+        console.log("entró", result.message);
+        newFood.item_id = result.message.item_id;
+        newFood.name = result.message.name;
+        newFood.price = result.message.price;
+        newFood.quantity = result.message.quantity;
+        newFood.status = result.message.status;
         currentStep = "validateRemove"
-        return restaurantFlow.validateFood(twiml,{name: "Pizza Champiñón",price: 85,status: "disponible",quantity: 2});
+        return restaurantFlow.validateFood(twiml,newFood);
     }
 }
 
