@@ -2,13 +2,13 @@ import WhatsappClientService from '../services/WhatsappClientService.js';
 import WhatsappRestaurantService from '../services/WhatsappRestaurantService.js';
 import Twilio from 'twilio';
 
-const userState = {}; // Objeto para guardar el estado de cada usuario
+let userState = {}; // Objeto para guardar el estado de cada usuario
 
 const whatsappController = async (req, res) => {
     try {
         const { Body: messageBody, From: from } = req.body;
         const twiml = new Twilio.twiml.MessagingResponse();
-
+        console.log("*****************************inicio****************************************")
         console.log("Mensaje recibido: ", messageBody);
 
         // Reiniciar el flujo si el mensaje es "hola"

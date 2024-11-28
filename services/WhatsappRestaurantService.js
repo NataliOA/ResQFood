@@ -14,11 +14,11 @@ let newFood = {item_id:0,name: "",price: 0,status: "disponible",quantity: 0}
 const handleMessage = async (messageBody, from, twiml, initialStep) => {
     //currentStep = currentStep;
     messageBody = mainService.normalizeText(messageBody.trim());
-
+    console.log("handleMessage-------------------------------")
     // Reset flow if the user types "hola"
     if (messageBody.toLowerCase() === "hola") {
         console.log("Reiniciando flujo desde ClientService...");
-        //currentStep = null;
+        currentStep = null;
         return await whatsappController(
             { 
                 body: { Body: messageBody, From: user.phone }, // Simula la estructura de req.body
@@ -96,6 +96,9 @@ const handleStartRestaurant = async (twiml,messageBody) => {
     }else if (messageBody == "2"){
         currentStep = "setRestaurant";
         return restaurantFlow.setRestaurant(twiml);
+    }else {
+        currentStep = "";
+        return twiml;
     }
 }
 

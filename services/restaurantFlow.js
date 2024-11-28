@@ -4,7 +4,7 @@ import { getRestaurantInfo,saveRestaurant,getOrdersByRestaurant,updateDeliveredO
 
 let id = "0";
 const startRestaurant = (twiml) => {
-    twiml.message("Bienvenido, para iniciar responde con el número:\n1. Restaurante registrado\n2. Nuevo Restaurante");
+    twiml.message("Bienvenido, para iniciar responde con el número:\n1. Restaurante registrado\n2. Nuevo Restaurante\n3. Salir");
     return twiml;
 };
 
