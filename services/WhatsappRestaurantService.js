@@ -1,5 +1,5 @@
 // services/WhatsappRestaurantService.js
-
+import mainService from './mainService.js'
 import restaurantFlow from './restaurantFlow.js';
 
 let currentStep = null;
@@ -10,11 +10,29 @@ let infoCount = 0;
 let feat = 0;
 let newFood = {name: "",price: 0,status: "disponible",quantity: 0}
 
-const handleMessage = async (messageBody, from, twiml) => {
-    if (messageBody === "hola") {
-        resetRestaurantFlow();
-        return welcomeMessage(twiml);
+const handleMessage = async (messageBody, from, twiml, initialStep) => {
+    //currentStep = currentStep;
+    messageBody = mainService.normalizeText(messageBody.trim());
+
+    // Reset flow if the user types "hola"
+    if (messageBody.toLowerCase() === "hola") {
+        console.log("Reiniciando flujo desde ClientService...");
+        //currentStep = null;
+        return await whatsappController(
+            { 
+                body: { Body: messageBody, From: user.phone }, // Simula la estructura de req.body
+            },
+            {
+                status: () => ({
+                    send: (response) => {
+                        console.log("Respuesta simulada enviada desde ClientService:", response);
+                    }
+                })
+            }
+        );
     }
+    console.log('currentStep', currentStep);
+    
 
     switch (currentStep) {
         case null:
