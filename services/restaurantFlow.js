@@ -63,7 +63,7 @@ const setaddress = (twiml) => {
 // }
 
 const restaurantOptions = (twiml) => {
-    twiml.message("¿Qué deseas hacer? Responde con el número:\n1. Actualizar Menú\n2. Ver Pedidos\n3. Salir");
+    twiml.message("¿Qué deseas hacer? Responde con el número:\n1. Actualizar Menú\n2. Salir");
     return twiml;
 };
 

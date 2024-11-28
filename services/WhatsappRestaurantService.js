@@ -145,9 +145,9 @@ const handleRestaurantOptions = async (twiml,messageBody) => {
         currentStep = "updateMenu";
         console.log("rest",RestaurantID);
         return restaurantFlow.getMenuFrom(twiml,RestaurantID);
-    } else if (messageBody === "2") {
+   /* } else if (messageBody === "2") {
         currentStep = "listOrders";
-        return restaurantFlow.getOrdersFrom(twiml,RestaurantID);
+        return restaurantFlow.getOrdersFrom(twiml,RestaurantID);*/
     } else{
         currentStep = "startRestaurant";
         return restaurantFlow.startRestaurant(twiml);
