@@ -1,5 +1,6 @@
 import Business from '../models/Business.js';
 import Order from '../models/Order.js';
+import Client from '../models/Client.js';
 
 export const getRestaurantsFromDB = async () => {
     return await Business.find({});
@@ -25,13 +26,17 @@ export const getMenuByRestaurant = async (restaurantId) => {
     return restaurant.menu;
 };
 
+export const getName = async (id) => {
+    const client = await Client.findOne({cliente_id:id});
+    return client.name;
+}
+
 export const getOrdersByRestaurant = async (restaurantId) => {
-    const restaurant = await Business.findOne({ business_id: restaurantId });
-    if (!restaurant) {
-        throw new Error("El negocio no se encontró.");
-    }
-    const orders = await getOrdersFromDB();
-    return orders.filter(ord => ord.business_id == restaurantId);
+    const orders = await Order.find({business_id:restaurantId});
+    
+    console.log(orders);
+
+    return orders;
 };
 
 export const updateDeliveredOrder = async (orderId) => {
@@ -69,8 +74,6 @@ export async function saveRestaurant(restName,restAddress) {
 
     const result = await newbusiness.save();
 
-    console.log("resultado: ",result)
-
     if(!result){
         throw new Error("El negocio no se creó correctamente.");
     }
@@ -78,23 +81,27 @@ export async function saveRestaurant(restName,restAddress) {
     return {success:true, message: result.business_id};
 }
 
-export async function saveFood(food,rest) {
+export const saveFood = async (food,rest) => {
+    console.log("addFood");
     const nuevoItem = food;
-
-    const resultado = await Business.updateOne(
+    console.log(food);
+    const resultado = await Business.findOneAndUpdate(
         { business_id: rest }, 
-        { $push: { menu: nuevoItem } }
+        { $push: { menu: nuevoItem } },
+        { new: true }
     );
 
+    console.log("res: ",resultado)
+
     if(!resultado){
-        throw new Error("El negocio no se creó correctamente.");
+        throw new Error("El artículo no se creó correctamente.");
     }
 
     return {success:true, message: resultado.menu};
 }
 
 export const getMenuItem = async (itemid,restId) => {
-    const newItem = await Business.updateOne(
+    const newItem = await Business.findOne(
         { business_id: restId, 'menu.item_id': itemid }
     );
 

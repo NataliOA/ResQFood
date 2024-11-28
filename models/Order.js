@@ -1,11 +1,9 @@
 import mongoose, { Schema, model } from 'mongoose';
 
 const OrderDetSchema = new mongoose.Schema({
-    business_id:{type:Number,required:true},
     item_id:{type:Number,required:true},
     cantidad:{type:Number,required:true},
-    subtotal:{type:Number,required:true},
-    pos:{type:Number,required:true}
+    subtotal:{type:Number,required:true}
 })
 
 OrderDetSchema.pre('save', async function (next) {
@@ -25,7 +23,8 @@ const OrderSchema = new mongoose.Schema({
     fecha: { type: String, required: true },
     detalles:[OrderDetSchema],
     total:{type: Number, required: true },
-    client_id: { type: Number, required: true }
+    client_id: { type: String, required: true },
+    business_id: { type: Number, required: true },
 });
 
 OrderSchema.pre('save', async function (next) {
